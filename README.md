@@ -11,7 +11,7 @@ Dette repo indeholder en færdig startapplikation til kommunikation mellem beboe
 ## Miljøfiler
 
 1. Kopiér `server/.env.example` til `server/.env` og justér efter behov (database-URL og JWT-secret).
-2. Kopiér `client/.env.example` til `client/.env` hvis du vil ændre API-basen.
+2. Kopiér `client/.env.example` til `client/.env` for lokal udvikling, så frontend rammer `http://localhost:4000/api`. I produktion/Vercel kan feltet udelades, da klienten som udgangspunkt kalder `/api`.
 
 ## Database
 
@@ -65,7 +65,7 @@ npm install
 npm run dev
 ```
 
-Frontend kører på `http://localhost:5173` og proxier API-kald til backend.
+Frontend kører på `http://localhost:5173`. Husk at `VITE_API_BASE_URL` i `.env` skal pege på den kørende backend, typisk `http://localhost:4000/api`.
 
 ## Loginroller
 
@@ -77,5 +77,22 @@ Frontend kører på `http://localhost:5173` og proxier API-kald til backend.
 
 ## Produktion
 
-- Kør `npm run build` i både `/server` og `/client` for at producere build-artifakter.
+- Kør `npm run build` i både `/server` og `/client` for at producere build-artifakter, hvis du selv vil hoste backend/frontend.
 - Host backend og frontend efter behov (fx via container eller separate tjenester).
+
+## Udrulning på Vercel
+
+Repoet er gjort klar til Vercel via `vercel.json`, som opsætter:
+
+- en statisk build af `/client` med Vite (`@vercel/static-build`)
+- en serverless funktion der bruger Express-appen fra `/server/src/vercel.ts`
+
+Fremgangsmåde:
+
+1. Forbind GitHub-repoet til Vercel.
+2. Under **Project Settings → Environment Variables** opret variablerne:
+   - `DATABASE_URL` (peg på en tilgængelig Postgres, fx managed DB)
+   - `JWT_SECRET`
+   - `VITE_API_BASE_URL` med værdien `/api` (så klienten rammer den serverless backend).
+3. Deploy projektet. Vercel læser `vercel.json`, bygger frontend og uploader Express-backenden som serverless API, så hele appen svarer på samme domæne.
+4. Husk at køre migreringer/seed manuelt på databasen via lokale scripts eller en CI-job, da Vercel ikke kører `prisma migrate` automatisk.
