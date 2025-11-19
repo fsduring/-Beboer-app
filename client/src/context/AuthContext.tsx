@@ -1,4 +1,4 @@
-import { createContext, type ReactNode, useEffect, useState } from 'react';
+import { createContext, type ReactNode, useEffect, useMemo, useState } from 'react';
 
 export interface UserProfile {
   id: number;
@@ -18,8 +18,11 @@ interface AuthContextValue {
 }
 
 const STORAGE_KEY = 'demoUser';
+const isBrowser = typeof window !== 'undefined';
 
-const demoUsers: Array<UserProfile & { password: string }> = [
+type DemoUser = UserProfile & { password: string };
+
+const demoUsers: DemoUser[] = [
   {
     id: 1,
     email: 'byggeleder@example.dk',
@@ -46,12 +49,25 @@ const demoUsers: Array<UserProfile & { password: string }> = [
   },
 ];
 
+const persistUser = (profile: UserProfile | null) => {
+  if (!isBrowser) return;
+  try {
+    if (profile) {
+      window.localStorage.setItem(STORAGE_KEY, JSON.stringify(profile));
+    } else {
+      window.localStorage.removeItem(STORAGE_KEY);
+    }
+  } catch {
+    /* Ignorer storage-problemer i demo */
+  }
+};
+
 export const AuthContext = createContext<AuthContextValue>({
   user: null,
   setUser: () => undefined,
   login: async () => null,
   logout: () => undefined,
-  loading: false,
+  loading: true,
   error: null,
 });
 
@@ -61,55 +77,69 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    const stored = localStorage.getItem(STORAGE_KEY);
-    if (stored) {
-      try {
+    if (!isBrowser) {
+      setLoading(false);
+      return;
+    }
+
+    try {
+      const stored = window.localStorage.getItem(STORAGE_KEY);
+      if (stored) {
         const parsed = JSON.parse(stored) as UserProfile;
         setUser(parsed);
-      } catch {
-        localStorage.removeItem(STORAGE_KEY);
       }
+    } catch {
+      if (isBrowser) {
+        window.localStorage.removeItem(STORAGE_KEY);
+      }
+    } finally {
+      setLoading(false);
     }
-    setLoading(false);
   }, []);
 
   const login = async (email: string, password: string) => {
     setLoading(true);
     setError(null);
 
-    const normalizedEmail = email.trim().toLowerCase();
-    const match = demoUsers.find((demo) => demo.email === normalizedEmail && demo.password === password);
+    try {
+      const normalizedEmail = email.trim().toLowerCase();
+      const normalizedPassword = password.trim();
+      const match = demoUsers.find(
+        (demo) => demo.email.toLowerCase() === normalizedEmail && demo.password === normalizedPassword,
+      );
 
-    if (match) {
-      const profile: UserProfile = {
-        id: match.id,
-        email: match.email,
-        fullName: match.fullName,
-        role: match.role,
-        unitId: match.unitId,
-      };
-      setUser(profile);
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(profile));
+      if (match) {
+        const profile: UserProfile = {
+          id: match.id,
+          email: match.email,
+          fullName: match.fullName,
+          role: match.role,
+          unitId: match.unitId,
+        };
+        setUser(profile);
+        persistUser(profile);
+        return profile;
+      }
+
+      setUser(null);
+      persistUser(null);
+      setError('Forkert e-mail eller adgangskode');
+      return null;
+    } finally {
       setLoading(false);
-      return profile;
     }
-
-    setUser(null);
-    localStorage.removeItem(STORAGE_KEY);
-    setError('Forkert e-mail eller adgangskode');
-    setLoading(false);
-    return null;
   };
 
   const logout = () => {
     setUser(null);
     setError(null);
-    localStorage.removeItem(STORAGE_KEY);
+    persistUser(null);
   };
 
-  return (
-    <AuthContext.Provider value={{ user, setUser, login, logout, loading, error }}>
-      {children}
-    </AuthContext.Provider>
+  const value = useMemo(
+    () => ({ user, setUser, login, logout, loading, error }),
+    [user, loading, error],
   );
+
+  return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 };
