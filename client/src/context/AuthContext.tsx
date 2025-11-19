@@ -1,52 +1,76 @@
-import { createContext, useEffect, useState } from 'react';
-import { api } from '../services/api';
+import React, {
+  createContext,
+  useContext,
+  useState,
+  ReactNode,
+} from "react";
 
-export interface UserProfile {
-  id: number;
-  email: string;
+type Role = "TENANT" | "ADVISOR" | "SITE_MANAGER";
+
+interface User {
+  id: string;
   fullName: string;
-  role: 'TENANT' | 'ADVISOR' | 'SITE_MANAGER';
-  unitId?: number | null;
+  role: Role;
 }
 
 interface AuthContextValue {
-  user: UserProfile | null;
-  setUser: (user: UserProfile | null) => void;
-  logout: () => void;
+  user: User | null;
   loading: boolean;
+  error: string | null;
+  login: (email: string, password: string) => Promise<void>;
+  logout: () => void;
 }
 
-export const AuthContext = createContext<AuthContextValue>({
-  user: null,
-  setUser: () => undefined,
-  logout: () => undefined,
-  loading: true,
-});
+const AuthContext = createContext<AuthContextValue | undefined>(undefined);
 
-export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const [user, setUser] = useState<UserProfile | null>(null);
-  const [loading, setLoading] = useState(true);
+export const AuthProvider = ({ children }: { children: ReactNode }) => {
+  const [user, setUser] = useState<User | null>(null);
+  const [loading, setLoading] = useState(false);
+  const [error] = useState<string | null>(null);
 
-  useEffect(() => {
-    const token = localStorage.getItem('token');
-    if (!token) {
-      setLoading(false);
-      return;
+  // FAKE login: ingen backend – vi bestemmer rolle ud fra e-mail
+  const login = async (email: string, _password: string) => {
+    setLoading(true);
+
+    let role: Role = "TENANT";
+
+    const lower = email.toLowerCase();
+    if (lower.startsWith("byg")) {
+      role = "SITE_MANAGER"; // byggeleder
+    } else if (lower.startsWith("raad")) {
+      role = "ADVISOR"; // rådgiver
+    } else {
+      role = "TENANT"; // beboer
     }
-    api
-      .get('/me')
-      .then((res) => setUser(res.data))
-      .catch(() => {
-        localStorage.removeItem('token');
-        setUser(null);
-      })
-      .finally(() => setLoading(false));
-  }, []);
+
+    setUser({
+      id: "demo-user",
+      fullName: "Demobruger",
+      role,
+    });
+
+    setLoading(false);
+  };
 
   const logout = () => {
-    localStorage.removeItem('token');
     setUser(null);
   };
 
-  return <AuthContext.Provider value={{ user, setUser, logout, loading }}>{children}</AuthContext.Provider>;
+  return (
+    <AuthContext.Provider
+      value={{ user, loading, error, login, logout }}
+    >
+      {children}
+    </AuthContext.Provider>
+  );
 };
+
+export const useAuthContext = () => {
+  const ctx = useContext(AuthContext);
+  if (!ctx) {
+    throw new Error("AuthContext er ikke tilgængelig");
+  }
+  return ctx;
+};
+
+export { AuthContext };
