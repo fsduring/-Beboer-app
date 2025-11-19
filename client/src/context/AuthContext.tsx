@@ -7,7 +7,7 @@ import React, {
 
 type Role = "TENANT" | "ADVISOR" | "SITE_MANAGER";
 
-interface User {
+export interface User {
   id: string;
   fullName: string;
   role: Role;
@@ -15,6 +15,7 @@ interface User {
 
 interface AuthContextValue {
   user: User | null;
+  setUser: (user: User | null) => void;
   loading: boolean;
   error: string | null;
   login: (email: string, password: string) => Promise<void>;
@@ -26,21 +27,25 @@ const AuthContext = createContext<AuthContextValue | undefined>(undefined);
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(false);
-  const [error] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(null);
 
-  // FAKE login: ingen backend – vi bestemmer rolle ud fra e-mail
+  // Fake login – ingen backend, vi bestemmer rolle ud fra e-mail
   const login = async (email: string, _password: string) => {
     setLoading(true);
+    setError(null);
+
+    const lower = email.trim().toLowerCase();
+    if (!lower) {
+      setError("Skriv din e-mail for at logge ind");
+      setLoading(false);
+      return;
+    }
 
     let role: Role = "TENANT";
-
-    const lower = email.toLowerCase();
     if (lower.startsWith("byg")) {
-      role = "SITE_MANAGER"; // byggeleder
+      role = "SITE_MANAGER";
     } else if (lower.startsWith("raad")) {
-      role = "ADVISOR"; // rådgiver
-    } else {
-      role = "TENANT"; // beboer
+      role = "ADVISOR";
     }
 
     setUser({
@@ -58,7 +63,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
   return (
     <AuthContext.Provider
-      value={{ user, loading, error, login, logout }}
+      value={{ user, setUser, loading, error, login, logout }}
     >
       {children}
     </AuthContext.Provider>
@@ -73,4 +78,5 @@ export const useAuthContext = () => {
   return ctx;
 };
 
-export { AuthContext };
+export { AuthCont
+
