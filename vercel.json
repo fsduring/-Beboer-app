@@ -17,9 +17,10 @@
       "src": "/api/(.*)",
       "dest": "server/src/vercel.ts"
     },
+    { "handle": "filesystem" },
     {
-      "src": "/(.*)",
-      "dest": "client/dist/$1"
+      "src": "/.*",
+      "dest": "/index.html"
     }
   ]
 }

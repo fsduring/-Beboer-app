@@ -3,12 +3,12 @@
   "version": "1.0.0",
   "main": "dist/index.js",
   "scripts": {
-    "dev": "ts-node-dev --respawn --transpile-only src/index.ts",
+    "dev": "tsx watch src/index.ts",
     "build": "tsc",
     "start": "node dist/index.js",
     "prisma:migrate": "prisma migrate dev",
     "prisma:generate": "prisma generate",
-    "seed": "ts-node src/seed.ts",
+    "seed": "tsx src/seed.ts",
     "postinstall": "prisma generate"
   },
   "dependencies": {
@@ -27,8 +27,7 @@
     "@types/jsonwebtoken": "^9.0.5",
     "@types/node": "^20.12.7",
     "prisma": "^5.15.0",
-    "ts-node": "^10.9.2",
-    "ts-node-dev": "^2.0.0",
+    "tsx": "^4.9.3",
     "typescript": "^5.4.5"
   }
 }

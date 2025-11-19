@@ -8,6 +8,14 @@ Dette repo indeholder en færdig startapplikation til kommunikation mellem beboe
 - pnpm/yarn/npm (eksemplerne her bruger npm)
 - Docker + docker-compose til PostgreSQL
 
+## Installation
+
+Kør en samlet installation fra repo-roden. Det installerer både backend- og frontend-afhængigheder gennem npm workspaces:
+
+```bash
+npm install
+```
+
 ## Miljøfiler
 
 1. Kopiér `server/.env.example` til `server/.env` og justér efter behov (database-URL og JWT-secret).
@@ -25,7 +33,6 @@ Kør derefter Prisma-migreringer fra `/server`:
 
 ```bash
 cd server
-npm install
 npm run prisma:generate
 npm run prisma:migrate
 ```
@@ -61,11 +68,18 @@ Backend kører nu på `http://localhost:4000`.
 
 ```bash
 cd client
-npm install
 npm run dev
 ```
 
 Frontend kører på `http://localhost:5173`. Husk at `VITE_API_BASE_URL` i `.env` skal pege på den kørende backend, typisk `http://localhost:4000/api`.
+
+### Hurtig samlet udvikling
+
+Vil du starte frontend og backend samtidigt, kan du køre følgende fra repo-roden (bruger `concurrently`):
+
+```bash
+npm run dev
+```
 
 ## Loginroller
 
@@ -77,7 +91,8 @@ Frontend kører på `http://localhost:5173`. Husk at `VITE_API_BASE_URL` i `.env
 
 ## Produktion
 
-- Kør `npm run build` i både `/server` og `/client` for at producere build-artifakter, hvis du selv vil hoste backend/frontend.
+- Kør `npm run build` i repo-roden for at bygge både server og client i én kommando.
+- Du kan fortsat køre `npm run build` i hhv. `/server` og `/client`, hvis du ønsker adskilte builds.
 - Host backend og frontend efter behov (fx via container eller separate tjenester).
 
 ## Udrulning på Vercel
@@ -94,5 +109,5 @@ Fremgangsmåde:
    - `DATABASE_URL` (peg på en tilgængelig Postgres, fx managed DB)
    - `JWT_SECRET`
    - `VITE_API_BASE_URL` med værdien `/api` (så klienten rammer den serverless backend).
-3. Deploy projektet. Vercel læser `vercel.json`, bygger frontend og uploader Express-backenden som serverless API, så hele appen svarer på samme domæne.
+3. Deploy projektet. `vercel.json` sørger for at klientbuildet leveres som statiske filer, mens alle `/api/*`-kald omskrives til Express-backenden. Resten af ruterne omskrives til `index.html`, så Vite-routeren håndterer navigationen.
 4. Husk at køre migreringer/seed manuelt på databasen via lokale scripts eller en CI-job, da Vercel ikke kører `prisma migrate` automatisk.
