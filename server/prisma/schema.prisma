@@ -1,0 +1,136 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum Role {
+  TENANT
+  ADVISOR
+  SITE_MANAGER
+}
+
+enum DocumentScope {
+  UNIT
+  DEPARTMENT
+  PROPERTY
+}
+
+model User {
+  id           Int       @id @default(autoincrement())
+  email        String    @unique
+  passwordHash String
+  fullName     String
+  role         Role
+  unitId       Int?
+  unit         Unit?     @relation(fields: [unitId], references: [id])
+  documents    Document[] @relation("DocumentCreator")
+  photos       Photo[]    @relation("PhotoTaker")
+  reads        DocumentRead[]
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+}
+
+model Property {
+  id          Int          @id @default(autoincrement())
+  name        String
+  departments Department[]
+  documents   Document[]
+  floorplans  Floorplan[]
+  photos      Photo[]
+}
+
+model Department {
+  id         Int        @id @default(autoincrement())
+  name       String
+  propertyId Int
+  property   Property   @relation(fields: [propertyId], references: [id])
+  units      Unit[]
+  documents  Document[]
+  floorplans Floorplan[]
+  photos     Photo[]
+}
+
+model Unit {
+  id           Int        @id @default(autoincrement())
+  unitNumber   String
+  departmentId Int
+  department   Department @relation(fields: [departmentId], references: [id])
+  tenants      User[]
+  documents    Document[]
+  floorplans   Floorplan[]
+  photos       Photo[]
+}
+
+model Document {
+  id           Int            @id @default(autoincrement())
+  title        String
+  content      String
+  fileUrl      String?
+  scope        DocumentScope
+  propertyId   Int?
+  property     Property?      @relation(fields: [propertyId], references: [id])
+  departmentId Int?
+  department   Department?    @relation(fields: [departmentId], references: [id])
+  unitId       Int?
+  unit         Unit?          @relation(fields: [unitId], references: [id])
+  createdById  Int
+  createdBy    User           @relation("DocumentCreator", fields: [createdById], references: [id])
+  createdAt    DateTime       @default(now())
+  reads        DocumentRead[]
+}
+
+model DocumentRead {
+  id            Int      @id @default(autoincrement())
+  documentId    Int
+  userId        Int
+  document      Document @relation(fields: [documentId], references: [id])
+  user          User     @relation(fields: [userId], references: [id])
+  firstOpenedAt DateTime
+  lastOpenedAt  DateTime
+  openCount     Int
+
+  @@unique([documentId, userId])
+}
+
+model Floorplan {
+  id           Int        @id @default(autoincrement())
+  name         String
+  imageUrl     String
+  propertyId   Int?
+  property     Property?  @relation(fields: [propertyId], references: [id])
+  departmentId Int?
+  department   Department? @relation(fields: [departmentId], references: [id])
+  unitId       Int?
+  unit         Unit?      @relation(fields: [unitId], references: [id])
+  markers      PhotoMarker[]
+}
+
+model Photo {
+  id           Int        @id @default(autoincrement())
+  url          String
+  note         String?
+  takenById    Int
+  takenBy      User       @relation("PhotoTaker", fields: [takenById], references: [id])
+  propertyId   Int?
+  property     Property?  @relation(fields: [propertyId], references: [id])
+  departmentId Int?
+  department   Department? @relation(fields: [departmentId], references: [id])
+  unitId       Int?
+  unit         Unit?      @relation(fields: [unitId], references: [id])
+  createdAt    DateTime   @default(now())
+  markers      PhotoMarker[]
+}
+
+model PhotoMarker {
+  id          Int       @id @default(autoincrement())
+  photoId     Int
+  floorplanId Int
+  x           Float
+  y           Float
+  photo       Photo     @relation(fields: [photoId], references: [id])
+  floorplan   Floorplan @relation(fields: [floorplanId], references: [id])
+}
