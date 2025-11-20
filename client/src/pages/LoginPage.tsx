@@ -42,6 +42,7 @@ const LoginPage = () => {
         <input value={email} onChange={(e) => setEmail(e.target.value)} type="email" required />
         <label>Adgangskode</label>
         <input value={password} onChange={(e) => setPassword(e.target.value)} type="password" required />
+        <p className="muted">Brug demo-konti: byggeleder@, beboer@ eller raadgiver@ med adgangskoden Test1234!</p>
         {error && <p className="error-text">{error}</p>}
         <button type="submit" disabled={loading}>
           {loading ? 'Logger ind...' : 'Log ind'}

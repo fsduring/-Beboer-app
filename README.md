@@ -83,7 +83,7 @@ npm run dev
 
 ## Demo-login uden backend
 
-Frontend kan køre som en selvstændig demo (fx på Vercel) uden en kørende backend. Login håndteres 100 % i browseren mod tre faste testbrugere. Brug en af e-mails fra tabellen herunder – adgangskoden er **altid** `Test1234!`.
+Frontend kan køre som en selvstændig demo (fx på Vercel) uden en kørende backend. Login håndteres 100 % i browseren mod tre faste testbrugere, så der foretages ingen netværkskald under login. Brug en af e-mails fra tabellen herunder – adgangskoden er **altid** `Test1234!`.
 
 ## Loginroller
 

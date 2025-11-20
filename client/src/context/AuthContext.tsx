@@ -98,36 +98,32 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   }, []);
 
   const login = async (email: string, password: string) => {
-    setLoading(true);
+    // Ingen netværkskald i demoen – alt sker lokalt
     setError(null);
 
-    try {
-      const normalizedEmail = email.trim().toLowerCase();
-      const normalizedPassword = password.trim();
-      const match = demoUsers.find(
-        (demo) => demo.email.toLowerCase() === normalizedEmail && demo.password === normalizedPassword,
-      );
+    const normalizedEmail = email.trim().toLowerCase();
+    const normalizedPassword = password.trim();
+    const match = demoUsers.find(
+      (demo) => demo.email.toLowerCase() === normalizedEmail && demo.password === normalizedPassword,
+    );
 
-      if (match) {
-        const profile: UserProfile = {
-          id: match.id,
-          email: match.email,
-          fullName: match.fullName,
-          role: match.role,
-          unitId: match.unitId,
-        };
-        setUser(profile);
-        persistUser(profile);
-        return profile;
-      }
-
-      setUser(null);
-      persistUser(null);
-      setError('Forkert e-mail eller adgangskode');
-      return null;
-    } finally {
-      setLoading(false);
+    if (match) {
+      const profile: UserProfile = {
+        id: match.id,
+        email: match.email,
+        fullName: match.fullName,
+        role: match.role,
+        unitId: match.unitId,
+      };
+      setUser(profile);
+      persistUser(profile);
+      return profile;
     }
+
+    setUser(null);
+    persistUser(null);
+    setError('Forkert e-mail eller adgangskode');
+    return null;
   };
 
   const logout = () => {
